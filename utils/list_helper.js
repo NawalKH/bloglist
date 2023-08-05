@@ -1,70 +1,60 @@
-const _ = require('lodash');
+const { groupBy } = require('lodash')
 
-const dummy = (blogs) => {
-    return 1
-}
+const dummy = (blogs) => 1
 
 const totalLikes = (blogs) => {
-    const reducer = (sum, blog) => {
-        return sum + blog.likes
-    }
-
-    return blogs.reduce(reducer, 0)
+  return blogs.reduce((sum, blog) => blog.likes + sum, 0)
 }
 
 const favoriteBlog = (blogs) => {
-    const maxNum = Math.max(...blogs.map(b => b.likes))
-    const blog = blogs.find(b => b.likes === maxNum)
+  if (blogs.length === 0) {
+    return undefined
+  }
 
-    return blogs.length === 0
-        ? {}
-        : {
-            title: blog.title,
-            author: blog.author,
-            likes: blog.likes
-        }
+  const { title, author, url, likes } = blogs.sort((b1, b2) => b2.likes - b1.likes)[0]
+
+  return { title, author, url, likes } 
 }
 
 const mostBlogs = (blogs) => {
-    if (blogs.length === 0)
-        return {}
+  if (blogs.length === 0) {
+    return undefined
+  }
 
-    const authors = _.countBy(blogs, 'author')
-    const max = _.max(_.values(authors))
+  const blogsByAuthor = groupBy(blogs, (blog) => blog.author)
 
-    for (key in authors) {
-        if (authors[key] === max) {
-            return {
-                author: key,
-                blogs: max
-            }
-        }
-    }
+  const authorBlogs = Object.entries(blogsByAuthor).reduce((array, [author, blogList]) => {
+    return array.concat({
+      author, 
+      blogs: blogList.length
+    })
+  }, [])
+
+  return authorBlogs.sort((e1, e2) => e2.blogs-e1.blogs)[0]
 }
 
-
 const mostLikes = (blogs) => {
-    if (blogs.length === 0)
-        return {}
+  if (blogs.length === 0) {
+    return undefined
+  }
 
-    const authors = _.groupBy(blogs, 'author')
+  const blogsByAuthor = groupBy(blogs, (blog) => blog.author)
 
-    for (key in authors)
-        authors[key] = _.sumBy(authors[key], 'likes')
+  const authorBlogs = Object.entries(blogsByAuthor).reduce((array, [author, blogList]) => {
+    return array.concat({
+      author, 
+      likes: blogList.reduce((sum, blog) => sum + blog.likes, 0)
+    })
+  }, [])
 
-    const max = _.max(_.values(authors))
-
-    for (key in authors) {
-        if (authors[key] === max) {
-            return {
-                author: key,
-                likes: max
-            }
-        }
-    }
+  return authorBlogs.sort((e1, e2) => e2.likes-e1.likes)[0]
 }
 
 
 module.exports = {
-    dummy, totalLikes, favoriteBlog, mostBlogs, mostLikes
+  dummy,
+  totalLikes,
+  favoriteBlog,
+  mostBlogs,
+  mostLikes
 }
